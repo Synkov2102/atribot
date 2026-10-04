@@ -40,6 +40,7 @@
 
 - `TELEGRAM_PROXY=socks5://логин:пароль@хост:порт` — SOCKS5 или HTTP-прокси;
 - `TELEGRAM_API_ROOT=https://ваш-адрес` — свой адрес, пересылающий запросы на `https://api.telegram.org`.
+  Бесплатный вариант — Cloudflare Worker, см. [cloudflare-worker/README.md](cloudflare-worker/README.md).
 
 ## Подключение к группе
 
