@@ -3,6 +3,7 @@ import { autoRetry } from '@grammyjs/auto-retry';
 import { generateOptions, generateProblem } from './captcha.js';
 import { addCheck, getCheck, keyOf, loadChecks, removeCheck, saveChecks, takeExpired } from './checks.js';
 import { loadConfig } from './config.js';
+import { clientOptions, describeConnection } from './telegram-client.js';
 import { TtlMap } from './ttl-map.js';
 
 const config = loadConfig();
@@ -30,9 +31,7 @@ const MUTED = permissionsWith(false);
 // Все права true снимают ограничения: дальше действуют общие права группы
 const UNRESTRICTED = permissionsWith(true);
 
-const bot = new Bot(config.token);
-// При наплыве новичков Telegram отвечает 429 — запрос повторяется, а не теряется
-bot.api.config.use(autoRetry({ maxRetryAttempts: 3, maxDelaySeconds: 30 }));
+const bot = new Bot(config.token, { client: clientOptions(config) });
 
 /**
  * Telegram присылает служебное сообщение о входе и событие chat_member отдельно,
@@ -259,6 +258,21 @@ const shutdown = () => {
 };
 process.once('SIGINT', shutdown);
 process.once('SIGTERM', shutdown);
+
+console.log(`Подключаюсь к Telegram ${describeConnection(config)}…`);
+
+// bot.start() и auto-retry при недоступном Telegram молча повторяют попытки бесконечно.
+// Проверяем связь сами, до подключения auto-retry: лучше понятная ошибка и перезапуск контейнера
+try {
+	bot.botInfo = await bot.api.getMe();
+} catch (err) {
+	const cause = err.error?.cause ?? err.error;
+	console.error('Не удалось подключиться к Telegram:', err.message ?? err, cause?.code ?? cause?.message ?? '');
+	process.exit(1);
+}
+
+// При наплыве новичков Telegram отвечает 429 — запрос повторяется, а не теряется
+bot.api.config.use(autoRetry({ maxRetryAttempts: 3, maxDelaySeconds: 30 }));
 
 await bot.start({
 	allowed_updates: ['message', 'chat_member', 'callback_query'],

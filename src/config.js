@@ -17,6 +17,19 @@ export function parseConfig(env) {
 		return value;
 	};
 
+	const url = (name, protocols) => {
+		const raw = env[name];
+		if (!raw) return undefined;
+		try {
+			const parsed = new URL(raw);
+			if (protocols.includes(parsed.protocol)) return raw.replace(/\/+$/, '');
+		} catch {
+			// ниже общая ошибка
+		}
+		errors.push(`${name}: нужен адрес вида ${protocols.map((p) => p + '//…').join(' или ')}`);
+		return undefined;
+	};
+
 	if (!env.BOT_TOKEN) {
 		errors.push('BOT_TOKEN не задан. Скопируйте .env.example в .env и впишите токен.');
 	}
@@ -27,6 +40,9 @@ export function parseConfig(env) {
 		maxAttempts: int('CAPTCHA_MAX_ATTEMPTS', 1, 1, 10),
 		options: int('CAPTCHA_OPTIONS', 8, 2, 12),
 		kickBanSec: int('KICK_BAN_SEC', 300, 31, 365 * 24 * 60 * 60),
+		// Для серверов, откуда api.telegram.org недоступен напрямую
+		proxy: url('TELEGRAM_PROXY', ['socks5:', 'socks5h:', 'socks4:', 'http:', 'https:']),
+		apiRoot: url('TELEGRAM_API_ROOT', ['https:', 'http:']),
 	};
 
 	if (config.maxAttempts >= config.options) {

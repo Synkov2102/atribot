@@ -11,7 +11,24 @@ test('значения по умолчанию', () => {
 		maxAttempts: 1,
 		options: 8,
 		kickBanSec: 300,
+		proxy: undefined,
+		apiRoot: undefined,
 	});
+});
+
+test('прокси и свой адрес API', () => {
+	const config = parseConfig({
+		...base,
+		TELEGRAM_PROXY: 'socks5://user:pass@1.2.3.4:1080',
+		TELEGRAM_API_ROOT: 'https://tg.example.com/',
+	});
+	assert.equal(config.proxy, 'socks5://user:pass@1.2.3.4:1080');
+	assert.equal(config.apiRoot, 'https://tg.example.com');
+});
+
+test('неправильный адрес прокси — ошибка', () => {
+	assert.throws(() => parseConfig({ ...base, TELEGRAM_PROXY: '1.2.3.4:1080' }), /TELEGRAM_PROXY/);
+	assert.throws(() => parseConfig({ ...base, TELEGRAM_PROXY: 'ftp://1.2.3.4' }), /TELEGRAM_PROXY/);
 });
 
 test('без токена — ошибка', () => {
