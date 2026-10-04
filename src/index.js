@@ -1,3 +1,4 @@
+import { format } from 'node:util';
 import { Bot, InlineKeyboard } from 'grammy';
 import { autoRetry } from '@grammyjs/auto-retry';
 import { generateOptions, generateProblem } from './captcha.js';
@@ -7,6 +8,12 @@ import { clientOptions, describeConnection } from './telegram-client.js';
 import { TtlMap } from './ttl-map.js';
 
 const config = loadConfig();
+
+// В текстах сетевых ошибок есть URL запроса, а в нём токен — в логи он попадать не должен
+for (const method of ['log', 'error', 'warn']) {
+	const original = console[method].bind(console);
+	console[method] = (...args) => original(format(...args).replaceAll(config.token, '<token>'));
+}
 
 const PERMISSION_KEYS = [
 	'can_send_messages',
