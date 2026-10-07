@@ -146,7 +146,8 @@ bot.on('chat_member', async (ctx) => {
 			`👋 ${mention(user)}, добро пожаловать! Чтобы писать в чате, выберите правильный ответ:\n\n` +
 				`<b>${question} = ?</b>\n\n` +
 				`На ответ ${Math.round(config.timeoutMs / 1000)} сек.`,
-			{ parse_mode: 'HTML', reply_markup: keyboard },
+			// Без звука: пример нужен новичку, остальных участников он не касается
+			{ parse_mode: 'HTML', reply_markup: keyboard, disable_notification: true },
 		);
 	} catch (err) {
 		// Без сообщения ответить нечем — не оставляем человека немым
